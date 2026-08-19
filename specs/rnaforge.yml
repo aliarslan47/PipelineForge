@@ -1,0 +1,106 @@
+name: RNAForge
+title: RNAForge Pipeline DAG
+filename: "rnaforge · pipeline.dag"
+repo: github.com/aliarslan47/RNAForge
+favicon: "🧬"
+viewbox: [1140, 1240]
+
+subtitle_tr: >-
+  Gerçek run() bağımlılık grafiği. Doğrusal omurga m00→m01→m03→m04→m05→m06; okuma QC (m02) doğrulamadan
+  ayrı bir daldır. Niceleme ve sayım (m04–m05) organizmaya göre prokaryot/ökaryot ayrışır, m06 diferansiyel
+  ifadede birleşir. m06 merkez hub'dır; tanı modülleri (m16/m17/m18) nicelemeden sonra koşar. Okuma tipi
+  (kısa/uzun) araç düzeyinde dik eksendir.
+subtitle_en: >-
+  The real run() dependency graph. Linear spine m00→m01→m03→m04→m05→m06; read QC (m02) is a branch off
+  validation. Quantification and counting (m04–m05) split into prokaryote/eukaryote and rejoin at m06
+  differential expression. m06 is the central hub; diagnostics (m16/m17/m18) run after quantification.
+  Read type (short/long) is an orthogonal, tool-level axis.
+footer_tr: >-
+  RNAForge · Bulk RNA-seq analiz platformu · github.com/aliarslan47/RNAForge. Kenarlar gerçek run()
+  bağımlılıklarından çıkarıldı; organizma × okuma-tipi ayrımı yalnız m04/m05'te, m06 ve sonrası agnostik.
+footer_en: >-
+  RNAForge · Bulk RNA-seq analysis platform · github.com/aliarslan47/RNAForge. Edges are the real run()
+  dependencies; the organism × read-type split lives only in m04/m05, m06 onward is agnostic.
+aria_tr: "RNAForge pipeline DAG. Omurga m00 m01 m03 m04 m05 m06. m06 merkez hub, tanı m04'ten dallanır."
+aria_en: "RNAForge pipeline DAG. Spine m00 m01 m03 m04 m05 m06. m06 central hub, diagnostics branch from m04."
+
+lanes:
+  far_left: 150
+  left: 360
+  center: 570
+  right: 800
+  far_right: 1010
+
+categories:
+  sh:   {color: blue,   tr: ortak,      en: shared}
+  prok: {color: green,  tr: prokaryot,  en: prokaryote}
+  euk:  {color: amber,  tr: ökaryot,    en: eukaryote}
+  diag: {color: purple, tr: tanı,       en: diagnostic, dashed: true}
+
+decision:
+  at: [570, 300]
+  tr_label: organizma
+  tr_sub: "prokaryot · ökaryot"
+  en_label: organism
+  en_sub: "prokaryote · eukaryote"
+
+hub_label: {at: [700, 560], tr: "hub → 7 dal", en: "hub → 7 branches"}
+
+nodes:
+  - {code: m00, tr: Basecalling, en: Basecalling, tool: "Dorado/Guppy · ONT", cat: sh, lane: center, y: 24, dep: "—"}
+  - {code: m01, tr: Doğrulama, en: Validate, tool: "girdi + platform", cat: sh, lane: center, y: 106, dep: m00}
+  - {code: m02, tr: Okuma QC, en: Read QC, tool: "FastQC · NanoPlot", cat: sh, lane: left, y: 106, dep: m01}
+  - {code: m03, tr: Trimming, en: Trimming, tool: "fastp · Pychopper", cat: sh, lane: center, y: 200, dep: m01}
+  - {code: m04, tr: Niceleme, en: Quantify, tool: "bowtie2 · minimap2", cat: prok, lane: left, y: 360, dep: m03}
+  - {code: m05, tr: Sayım, en: Counts, tool: "featureCounts (-L)", cat: prok, lane: left, y: 446, dep: m04}
+  - {code: m04e, tr: Niceleme, en: Quantify, tool: "Salmon · minimap2→tx", cat: euk, lane: right, y: 360, dep: m03}
+  - {code: m05e, tr: Sayım, en: Counts, tool: "tximport · tx2gene", cat: euk, lane: right, y: 446, dep: m04e}
+  - {code: m06, tr: "Diferansiyel İfade", en: "Differential Expr.", tool: "DESeq2 · agnostik hub", cat: sh, lane: center, y: 540, dep: m05, tag: HUB}
+  - {code: m07, tr: Figürler, en: Figures, tool: "PCA·Volcano·Heatmap·MA", cat: sh, lane: center, y: 636, dep: m06}
+  - {code: m09, tr: GO Zenginleştirme, en: GO Enrichment, tool: "GO ORA", cat: sh, lane: right, y: 720, dep: m06}
+  - {code: m10, tr: KEGG, en: KEGG, tool: "pathway ORA", cat: sh, lane: right, y: 802, dep: m06}
+  - {code: m11, tr: GSEA, en: GSEA, tool: "fgsea · sıralı stat", cat: sh, lane: right, y: 884, dep: m06}
+  - {code: m12, tr: Semantik İndirgeme, en: Semantic Reduction, tool: "REVIGO-benzeri (Lin)", cat: sh, lane: right, y: 966, dep: "m09 / m11"}
+  - {code: m15, tr: PPI Ağı, en: PPI Network, tool: "STRING + Louvain", cat: sh, lane: right, y: 1048, dep: m06}
+  - {code: m13, tr: "AMR & Virülans", en: "AMR & Virulence", tool: "abricate + AMRFinderPlus", cat: prok, lane: far_left, y: 720, dep: m06}
+  - {code: m14, tr: Operon, en: Operon, tool: "intergenik + operon DE", cat: prok, lane: far_left, y: 802, dep: m06}
+  - {code: m16, tr: Sekans QC, en: Sequence QC, tool: "SortMeRNA · RSeQC", cat: diag, lane: far_right, y: 360, dep: m04}
+  - {code: m17, tr: Hizalama QC, en: Alignment QC, tool: "samtools stats", cat: diag, lane: far_right, y: 446, dep: m04}
+  - {code: m18, tr: MultiQC, en: MultiQC, tool: "kapstone · tüm koşu", cat: diag, lane: far_right, y: 540, dep: m04}
+  - {code: m08, tr: Rapor, en: Report, tool: "toplar: m07 + m09–m15", cat: sh, lane: center, y: 1120, dep: "m07 (+m09–m15)"}
+
+edges:
+  - {src: m00, dst: m01, cat: sh}
+  - {src: m01, dst: m02, cat: sh, from_port: left, to_port: right}
+  - {src: m01, dst: m03, cat: sh}
+  - {src: m03, dst: decision, cat: sh}
+  - {src: decision, dst: m04, cat: prok, from_port: left, to_port: top}
+  - {src: decision, dst: m04e, cat: euk, from_port: right, to_port: top}
+  - {src: m04, dst: m05, cat: prok}
+  - {src: m04e, dst: m05e, cat: euk}
+  - {src: m05, dst: m06, cat: prok}
+  - {src: m05e, dst: m06, cat: euk}
+  - {src: m06, dst: m07, cat: sh}
+  - {src: m06, dst: m09, cat: sh, to_port: left}
+  - {src: m06, dst: m10, cat: sh, to_port: left}
+  - {src: m06, dst: m11, cat: sh, to_port: left}
+  - {src: m06, dst: m15, cat: sh, to_port: left}
+  - {src: m06, dst: m13, cat: prok, to_port: top}
+  - {src: m06, dst: m14, cat: prok, to_port: top}
+  - {src: m07, dst: m08, cat: sh}
+  - {src: m11, dst: m12, cat: sh}
+  - {src: m09, dst: m12, cat: sh, from_port: right, to_port: right}
+  - {src: m04e, dst: m16, cat: diag, from_port: right, to_port: left}
+  - {src: m04e, dst: m17, cat: diag, from_port: right, to_port: left}
+  - {src: m04e, dst: m18, cat: diag, from_port: right, to_port: left}
+
+envs:
+  - rnaforge-core
+  - rnaforge-qc
+  - rnaforge-seqqc
+  - rnaforge-quant-prok
+  - rnaforge-quant-euk
+  - rnaforge-de
+  - rnaforge-amr
+  - rnaforge-longread
+  - rnaforge-basecall

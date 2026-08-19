@@ -1,0 +1,115 @@
+name: BacForge
+title: BacForge Pipeline DAG
+filename: "bacforge · pipeline.dag"
+repo: github.com/aliarslan47/BacForge
+favicon: "🧫"
+viewbox: [1240, 1300]
+
+subtitle_tr: >-
+  Gerçek run() bağımlılık grafiği. Platform kararı M00'da verilir (short/long/hybrid/assembly); M01 ve M03
+  kendi içinde platforma göre dallanır ve M04'te birleşir. M04 (cilalı genom) merkez hub'dır — M05–M16 ondan
+  dallanır. M17 tüm analiz çıktılarını toplar, M18 rapor kapstone'dur. Koşullu modüller (M13–M16) girdi yoksa
+  N/A damgalanır.
+subtitle_en: >-
+  The real run() dependency graph. The platform decision is made in M00 (short/long/hybrid/assembly); M01 and
+  M03 branch internally by platform and rejoin at M04. M04 (the polished genome) is the central hub — M05–M16
+  fan out from it. M17 aggregates all analysis outputs and M18 is the report capstone. Conditional modules
+  (M13–M16) are stamped N/A when inputs are absent.
+footer_tr: >-
+  BacForge · Bakteri tam-genom (WGS) analiz platformu · github.com/aliarslan47/BacForge. Kenarlar gerçek run()
+  bağımlılıklarından; platform ayrımı M01/M03 içinde, M04'te birleşir, M04→M18 platform-agnostik.
+footer_en: >-
+  BacForge · Bacterial whole-genome (WGS) analysis platform · github.com/aliarslan47/BacForge. Edges are the
+  real run() dependencies; the platform split is in M01/M03, rejoins at M04, M04→M18 is platform-agnostic.
+aria_tr: "BacForge pipeline DAG. Omurga M00 platform kararı, M04 birleşme ve hub, M05-M16 dallanır, M18 rapor."
+aria_en: "BacForge pipeline DAG. Spine M00 platform decision, M04 rejoin and hub, M05-M16 fan out, M18 report."
+
+lanes:
+  far_left: 150
+  left: 300
+  center: 570
+  right: 800
+
+categories:
+  sh:   {color: blue,   tr: ortak,    en: shared}
+  plat: {color: green,  tr: platform, en: platform}
+  cond: {color: amber,  tr: koşullu,  en: conditional}
+  diag: {color: purple, tr: tanı,     en: diagnostic, dashed: true}
+
+decision:
+  at: [570, 112]
+  tr_label: platform
+  tr_sub: "short · long · hybrid"
+  en_label: platform
+  en_sub: "short · long · hybrid"
+
+hub_label: {at: [570, 400], tr: "hub → M05–M16", en: "hub → M05–M16"}
+
+nodes:
+  - {code: M00, tr: Girdi Tespiti, en: Input Detection, tool: "auto-detect · sha256", cat: sh, lane: center, y: 24, dep: "—"}
+  - {code: M01, tr: Okuma QC, en: Read QC, tool: "fastp · NanoPlot · Filtlong", cat: plat, lane: center, y: 160, dep: M00}
+  - {code: M02, tr: Taksonomik QC, en: Taxonomic QC, tool: "Kraken2 · Bracken", cat: diag, lane: left, y: 160, dep: "M00 (+M01)"}
+  - {code: M03, tr: Genom Kurgusu, en: Assembly, tool: "SPAdes·Flye·Unicycler", cat: plat, lane: center, y: 240, dep: "M00 (+M01)"}
+  - {code: M04, tr: "Cila & QC", en: "Polish & QC", tool: "QUAST · CheckM2 · hub", cat: sh, lane: center, y: 320, dep: M03, tag: HUB}
+  - {code: M05, tr: "Tür & En-Yakın", en: "Species & Refs", tool: "BLAST·FastANI·barrnap", cat: sh, lane: right, y: 412, dep: M04}
+  - {code: M06, tr: Anotasyon, en: Annotation, tool: "Bakta", cat: sh, lane: right, y: 496, dep: "M04 (+M05)"}
+  - {code: M07, tr: Suş Tiplendirme, en: Strain Typing, tool: "mlst·Kleborate·Kaptive", cat: sh, lane: right, y: 580, dep: "M04 (+M02)"}
+  - {code: M08, tr: Direnç (AMR), en: AMR, tool: "AMRFinderPlus·RGI·ResFinder", cat: sh, lane: right, y: 664, dep: M04}
+  - {code: M09, tr: Virülans, en: Virulence, tool: "VFDB (ABRicate)", cat: sh, lane: right, y: 748, dep: M04}
+  - {code: M10, tr: Plazmid, en: Plasmids, tool: "MOB-suite·PlasmidFinder", cat: sh, lane: right, y: 832, dep: M04}
+  - {code: M11, tr: Mobil Elementler, en: Mobile Elements, tool: "ISEScan·IntegronFinder", cat: sh, lane: right, y: 916, dep: M04}
+  - {code: M12, tr: "Faj & CRISPR", en: "Phage & CRISPR", tool: "geNomad", cat: sh, lane: right, y: 1000, dep: M04}
+  - {code: M13, tr: Varyantlar, en: Variants, tool: "Snippy", cat: cond, lane: far_left, y: 412, dep: "M04 (+M05)"}
+  - {code: M14, tr: Genomik Bağlam, en: Genomic Context, tool: "clinker", cat: cond, lane: far_left, y: 496, dep: "M06 (+M05)"}
+  - {code: M15, tr: Karşılaştırmalı, en: Comparative, tool: "Panaroo (batch)", cat: cond, lane: far_left, y: 580, dep: M04}
+  - {code: M16, tr: Filogenomik, en: Phylogenomics, tool: "Mash + NJ", cat: cond, lane: far_left, y: 664, dep: "M04 (+M05)"}
+  - {code: M17, tr: İstatistik, en: Statistics, tool: "toplar: M02–M13", cat: sh, lane: center, y: 1044, dep: "M00 (M02–M13)"}
+  - {code: M18, tr: Rapor, en: Report, tool: "HTML/PDF · kapstone", cat: sh, lane: center, y: 1190, dep: M17}
+
+edges:
+  - {src: M00, dst: decision, cat: sh}
+  - {src: decision, dst: M01, cat: plat, from_port: bottom, to_port: top}
+  - {src: M01, dst: M03, cat: plat}
+  - {src: M03, dst: M04, cat: sh}
+  - {src: M00, dst: M02, cat: diag, from_port: bottom, to_port: top}
+  - {src: M04, dst: M05, cat: sh, to_port: left}
+  - {src: M04, dst: M06, cat: sh, to_port: left}
+  - {src: M04, dst: M07, cat: sh, to_port: left}
+  - {src: M04, dst: M08, cat: sh, to_port: left}
+  - {src: M04, dst: M09, cat: sh, to_port: left}
+  - {src: M04, dst: M10, cat: sh, to_port: left}
+  - {src: M04, dst: M11, cat: sh, to_port: left}
+  - {src: M04, dst: M12, cat: sh, to_port: left}
+  - {src: M04, dst: M13, cat: cond, to_port: top}
+  - {src: M04, dst: M14, cat: cond, to_port: top}
+  - {src: M04, dst: M15, cat: cond, to_port: top}
+  - {src: M04, dst: M16, cat: cond, to_port: top}
+  - {src: M12, dst: M17, cat: sh, from_port: bottom, to_port: top}
+  - {src: M16, dst: M17, cat: cond, from_port: bottom, to_port: top}
+  - {src: M17, dst: M18, cat: sh}
+
+envs:
+  - bacforge
+  - ali-illumina-qc
+  - ali-ont-qc
+  - ali-flye
+  - ali-medaka
+  - ali-assembly-sr
+  - ali-quast
+  - ali-checkm2
+  - ali-qc
+  - ali-blast
+  - ali-species
+  - ali-comparative
+  - ali-bakta
+  - ali-typing
+  - ali-kleborate
+  - ali-kaptive
+  - ali-chewbbaca
+  - ali-amrfinder
+  - ali-rgi
+  - ali-virulence
+  - ali-mobsuite
+  - ali-mge
+  - ali-genomad
+  - ali-clinker

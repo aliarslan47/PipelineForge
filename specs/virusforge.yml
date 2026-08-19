@@ -1,0 +1,83 @@
+name: VirusForge
+title: VirusForge Pipeline DAG
+filename: "virusforge · pipeline.dag"
+repo: github.com/aliarslan47/VirusForge
+favicon: "🦠"
+viewbox: [1000, 960]
+
+subtitle_tr: >-
+  Gerçek run() veri bağımlılık grafiği. Ortak trunk V00→V04; V04 (geNomad) molekül kararıdır — DNA/faj ve
+  RNA virüs dalları ayrılır ve V12 raporunda birleşir. V02/V03/V04/V06 tek modüldür, molekül tipine göre
+  kendi içinde dallanır. Okuma tipi (kısa/uzun/hibrit/assembly) buna dik ayrı eksendir.
+subtitle_en: >-
+  The real run() data-dependency graph. Shared trunk V00→V04; V04 (geNomad) is the molecule decision —
+  DNA/phage and RNA virus branches split and rejoin at the V12 report. V02/V03/V04/V06 are single modules
+  that fork internally by molecule. Read type (short/long/hybrid/assembly) is a separate, orthogonal axis.
+footer_tr: >-
+  VirusForge · RNA + DNA viral / faj genom analiz platformu · github.com/aliarslan47/VirusForge. Kenarlar
+  gerçek run() veri bağımlılıklarından; molekül ayrımı modül-içi (is_rna/is_phage), yollar V12'de birleşir.
+footer_en: >-
+  VirusForge · RNA + DNA viral / phage genome analysis platform · github.com/aliarslan47/VirusForge. Edges
+  are the real run() data dependencies; the molecule split is in-module (is_rna/is_phage), paths rejoin at V12.
+aria_tr: "VirusForge pipeline DAG. Ortak trunk V00-V04, molekül kararı DNA ve RNA dallarına ayrılır, V12'de birleşir."
+aria_en: "VirusForge pipeline DAG. Shared trunk V00-V04, molecule decision splits into DNA and RNA branches, rejoin at V12."
+
+lanes:
+  left: 300
+  center: 570
+  right: 840
+
+categories:
+  sh:  {color: blue,  tr: ortak,     en: shared}
+  dna: {color: green, tr: DNA / faj, en: DNA / phage}
+  rna: {color: amber, tr: RNA virüs, en: RNA virus}
+
+decision:
+  at: [570, 452]
+  tr_label: molekül
+  tr_sub: "DNA · RNA"
+  en_label: molecule
+  en_sub: "DNA · RNA"
+
+nodes:
+  - {code: V00, tr: "Girdi & Tespit", en: "Input & Detect", tool: "auto-detect · sha256", cat: sh, lane: center, y: 24, dep: "—"}
+  - {code: V01, tr: Okuma QC, en: Read QC, tool: "fastp · NanoPlot · filtlong", cat: sh, lane: center, y: 104, dep: V00}
+  - {code: V02, tr: Assembly, en: Assembly, tool: "SPAdes·Flye·Unicycler·iVar", cat: sh, lane: center, y: 184, dep: V01}
+  - {code: V03, tr: "Cilalama & QC", en: "Polish & QC", tool: "Medaka·QUAST·CheckV", cat: sh, lane: center, y: 264, dep: V02}
+  - {code: V04, tr: Viral Tanıma, en: Viral ID, tool: "geNomad", cat: sh, lane: center, y: 344, dep: V03}
+  - {code: V06, tr: Anotasyon, en: Annotation, tool: "Pharokka / VADR", cat: sh, lane: center, y: 512, dep: "V03 (+V04)"}
+  - {code: V05, tr: Taksonomi, en: Taxonomy, tool: "Mash + INPHARED", cat: dna, lane: left, y: 512, dep: V03}
+  - {code: V07, tr: Faj Karakter., en: Phage Charact., tool: "PhaBOX", cat: dna, lane: left, y: 598, dep: V04}
+  - {code: V08, tr: "AMR & Virülans", en: "AMR & Virulence", tool: "AMRFinderPlus", cat: dna, lane: left, y: 684, dep: "V06 + V04"}
+  - {code: V09, tr: Karşılaştırmalı, en: Comparative, tool: "BLAST·IQ-TREE2·taxmyPHAGE", cat: dna, lane: left, y: 770, dep: "V04 + V05 + V06"}
+  - {code: V10, tr: Varyant, en: Variants, tool: "iVar + LoFreq", cat: rna, lane: right, y: 512, dep: V02}
+  - {code: V11, tr: Soy / Klad, en: Lineage / Clade, tool: "Nextclade", cat: rna, lane: right, y: 598, dep: V02}
+  - {code: V12, tr: "Rapor & Export", en: "Report & Export", tool: "TR+EN HTML · provenance", cat: sh, lane: center, y: 858, dep: "V00–V11"}
+
+edges:
+  - {src: V00, dst: V01, cat: sh}
+  - {src: V01, dst: V02, cat: sh}
+  - {src: V02, dst: V03, cat: sh}
+  - {src: V03, dst: V04, cat: sh}
+  - {src: V04, dst: decision, cat: sh}
+  - {src: decision, dst: V06, cat: sh, from_port: bottom, to_port: top}
+  - {src: decision, dst: V05, cat: dna, from_port: left, to_port: top}
+  - {src: decision, dst: V10, cat: rna, from_port: right, to_port: top}
+  - {src: V05, dst: V07, cat: dna}
+  - {src: V07, dst: V08, cat: dna}
+  - {src: V08, dst: V09, cat: dna}
+  - {src: V10, dst: V11, cat: rna}
+  - {src: V06, dst: V08, cat: sh, from_port: bottom, to_port: right}
+  - {src: V06, dst: V12, cat: sh}
+  - {src: V09, dst: V12, cat: dna, from_port: bottom, to_port: top}
+  - {src: V11, dst: V12, cat: rna, from_port: bottom, to_port: top}
+
+envs:
+  - virusforge
+  - vf_long
+  - vf_phabox
+  - vf_amr
+  - vf_rna
+  - vf_vadr
+  - vf_lofreq
+  - vf_nextclade
