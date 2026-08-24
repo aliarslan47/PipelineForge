@@ -1,52 +1,57 @@
 # PipelineForge
 
-İngilizce sürüm: [README.md](README.md)
+Forge ailesinin standart **Pipeline DAG** diyagramları için bir üretici — proje başına küçük bir spec'i, kendine yeten, çift dilli (`tr`/`en`) bir HTML düğüm grafiğine dönüştürür.
 
-Forge ailesinin standart **Pipeline DAG** şemaları için üretici. Küçük bir proje-spec'ini alıp
-kendi kendine yeten, çift dilli (`tr`/`en`) bir HTML sayfasına çevirir: nokta-ızgara canvas üzerinde
-elle-çizilmiş inline-SVG node-graph, tiplenmiş kartlar (kod çipi + ad + araç + portlar), eğri bezier
-oklar, karar düğümü, modül matrisi tablosu ve izole ortam listesi. Her proje **aynı tornadan** çıkar;
-yalnız graf içeriği ile kategori paleti değişir.
+[![Pipeline DAG](https://img.shields.io/badge/output-Pipeline%20DAG-0d6b8f)](https://github.com/aliarslan47/PipelineForge)
+[![family](https://img.shields.io/badge/family-Forge-2f8f5b)](https://github.com/aliarslan47/PipelineForge)
+[![spec](https://img.shields.io/badge/driven%20by-YAML%20spec-c07211)](https://github.com/aliarslan47/PipelineForge)
 
-Amaç: RNAForge, VirusForge ve BacForge'un `docs/pipeline_architecture.html`'leri elle çizilmişti.
-PipelineForge bunu tekrarlanabilir kılar — tek iskelet, tek komut, spec'le beslenir.
+**Türkçe** · [English](README.md)
 
-## Nasıl çalışır
+## Nedir?
 
-- **İskelet sabit** (RNAForge referansı): CSS/tema token'ları, bölümler, düğüm dili, TR/EN toggle ve
-  yerleşim mekaniği `pipelineforge/forge.py` içinde. Görünüm için tek kaynak-doğruluk.
-- **İçerik spec'ten** (`specs/<proje>.yml`): düğümler, kenarlar, kategoriler, araçlar, ortamlar, karar.
-- **Kenarlar gerçek `run()` bağımlılıkları.** Spec yazarı bunları projenin kodundan çıkarır
-  (`state.is_done` / `inputs()` guard'ları) — şema pipeline'ın gerçekte nasıl koştuğuyla örtüşür.
-- **Renkler rol, kategoriler projeye özgü.** Mavi = ortak (ailede sabit), yeşil ve amber = iki dal
-  kategorisi, mor = tanı. Her proje kendi kategorisini (organizma, molekül, platform, …) bu rollere oturtur.
-- **Yerleşim motoru.** Her düğüm bir `lane` (x-kolonu) ve `y` bildirir; motor piksel konumlarını
-  hesaplar ve her kenarı tiplenmiş portlar (`top`/`bottom`/`left`/`right`) arasında bezier olarak,
-  kart kenarına dik girip çıkacak şekilde çizer. Hub yelpazeleri `to_port: left` kullanır.
+PipelineForge, Forge ailesinin diyagram-üretici üyesidir — BacForge, VirusForge ve RNAForge ile aynı görsel standart, ancak pipeline değil bir araç. Her projenin `docs/pipeline_architecture.html`'i aynı kalıptan çıkar; yalnızca grafik içeriği ve kategori paleti değişir.
+
+## Ne yapar?
+
+Bir YAML spec'inden, noktalı bir tuval üzerine elle-çizilmiş inline-SVG bir düğüm grafiği render eder: tipli kartlar (kod çipi + ad + araç + portlar), eğri bezier kenarlar, bir karar baklavası, bir modül matris tablosu, izole-ortam listesi ve bir TR/EN geçişi.
+
+- **İskelet sabittir** (RNAForge referansı): CSS/tema, bölümler, düğüm sözlüğü ve yerleşim mekaniği `pipelineforge/forge.py` içindedir — görünüm için tek doğruluk kaynağı.
+- **İçerik spec'ten gelir** (`specs/<proje>.yml`): düğümler, kenarlar, kategoriler, araçlar, ortamlar, karar düğümü.
+- **Kenarlar gerçek `run()` bağımlılıklarıdır**; projenin kodundan çıkarılır, böylece diyagram pipeline'ın gerçekte nasıl çalıştığıyla örtüşür — üstünkörü bir eskiz değil.
+- **Renkler roldür, kategoriler proje-bazlıdır**: mavi = ortak, yeşil/kehribar = dallar, mor = tanısal. Her render kendini doğrular (düğüm/kenar sayısı, etiket dengesi, `U+FFFD` yok).
+
+## Kurulum
+
+```bash
+git clone https://github.com/aliarslan47/PipelineForge.git
+cd PipelineForge
+
+pip install -e .            # ya da: pip install pyyaml
+```
 
 ## Kullanım
 
 ```bash
-pip install -e .            # ya da: pip install pyyaml
-pipelineforge render specs/rnaforge.yml -o ../rnaforge-pipeline/docs/pipeline_architecture.html
+pipelineforge render specs/rnaforge.yml   -o ../rnaforge-pipeline/docs/pipeline_architecture.html
+pipelineforge render specs/virusforge.yml -o ../VirusForge/docs/pipeline_architecture.html
+pipelineforge render specs/bacforge.yml   -o ../BacForge/docs/pipeline_architecture.html
 ```
 
-Her render kendini doğrular: sayfa başına düğüm/kenar sayısını basar, etiket dengesini ve bozuk
-karakter (`U+FFFD`) olmadığını kontrol eder. Çıktıyı GitHub Pages'te yayımla (`Settings → Pages →
-main /docs`) ki proje README'sindeki rozet canlı render'lı sayfaya bağlansın.
+Çıktıyı GitHub Pages'te yayınla (`Settings → Pages → main /docs`); böylece proje README'sindeki diyagram rozeti canlı bir sayfaya bağlanır.
 
-## Örnek spec'ler
+## Modüller
+
+Render ettiği spec'ler (her Forge projesi için bir tane); yeni proje eklemek için projenin gerçek `run()` bağımlılıklarını `specs/<proje>.yml`'ye çıkar, render et ve README rozetini yayınlanan sayfaya yönlendir.
 
 | Spec | Proje | Arketip | Düğüm / kenar |
 |---|---|---|---|
-| `specs/rnaforge.yml`   | RNAForge   | hub-and-spoke (m06) | 21 / 23 |
-| `specs/virusforge.yml` | VirusForge | molekül-dal (DNA/RNA) | 13 / 16 |
-| `specs/bacforge.yml`   | BacForge   | hub-and-spoke (M04) | 19 / 20 |
+| `specs/rnaforge.yml` | RNAForge | hub-and-spoke (m06) | 21 / 23 |
+| `specs/virusforge.yml` | VirusForge | molekül dalı (DNA/RNA) | 13 / 16 |
+| `specs/bacforge.yml` | BacForge | hub-and-spoke (M04) | 19 / 20 |
 
-## Yeni proje ekleme
+Tam spec formatı ve "yeni proje ekleme" adımları kaynak kod ile `specs/` içindedir.
 
-1. Projenin modül kodundan gerçek `run()` bağımlılıklarını çıkar (hangi modül hangisini şart koşuyor).
-2. `specs/<proje>.yml` yaz: `meta`, `lanes`, `categories`, `nodes` (kod, tr/en ad, araç, `cat`,
-   `lane`, `y`, `dep`), `edges`, `envs`, opsiyonel `decision` ve `hub_label`.
-3. `pipelineforge render specs/<proje>.yml -o <proje>/docs/pipeline_architecture.html`.
-4. Commit et, Pages'i aç, proje README'sindeki diyagram rozetini render'lı URL'e bağla.
+---
+
+Forge ailesi: **PipelineForge** (DAG üreticisi) · [RNAForge](https://github.com/aliarslan47/RNAForge) (bulk RNA-seq) · [BacForge](https://github.com/aliarslan47/BacForge) (bakteri) · [VirusForge](https://github.com/aliarslan47/VirusForge) (virüs/faj).

@@ -1,58 +1,57 @@
 # PipelineForge
 
-Turkish version: [README.tr.md](README.tr.md)
+A generator for the Forge family's standard **Pipeline DAG** diagrams — turns a small per-project spec into a self-contained, bilingual (`tr`/`en`) HTML node-graph.
 
-A generator for the Forge family's standard **Pipeline DAG** diagrams. It turns a small
-per-project spec into a self-contained, bilingual (`tr`/`en`) HTML page: a hand-drawn inline-SVG
-node-graph on a dotted canvas, typed cards (code chip + name + tool + ports), curved bezier edges,
-a decision diamond, a module matrix table, and the isolated-environment list. Every project comes
-out of the same mould; only the graph content and the category palette change.
+[![Pipeline DAG](https://img.shields.io/badge/output-Pipeline%20DAG-0d6b8f)](https://github.com/aliarslan47/PipelineForge)
+[![family](https://img.shields.io/badge/family-Forge-2f8f5b)](https://github.com/aliarslan47/PipelineForge)
+[![spec](https://img.shields.io/badge/driven%20by-YAML%20spec-c07211)](https://github.com/aliarslan47/PipelineForge)
 
-The point: RNAForge, VirusForge and BacForge all had their `docs/pipeline_architecture.html` drawn
-by hand. PipelineForge makes that reproducible — one skeleton, one command, driven by a spec.
+[Türkçe](README.tr.md) · **English**
 
-## How it works
+## What is it?
 
-- **Skeleton is fixed** (the RNAForge reference): CSS/theme tokens, sections, node vocabulary, the
-  TR/EN toggle, and the layout mechanics all live in `pipelineforge/forge.py`. There is one source
-  of truth for the look.
-- **Content comes from a spec** (`specs/<project>.yml`): the nodes, the edges, the categories, the
-  tools, the environments, the decision node.
-- **Edges are the real `run()` dependencies.** The spec author extracts them from the project's code
-  (the `state.is_done` / `inputs()` guards), so the diagram matches how the pipeline actually runs —
-  it is not a hand-wavy sketch.
-- **Colours are roles, categories are per-project.** Blue = shared (fixed across the family), green
-  and amber = the two branch categories, purple = diagnostic. A project maps its own categories
-  (organism, molecule, platform, …) onto these roles.
-- **Layout engine.** Each node declares a `lane` (an x-column) and a `y`; the engine computes pixel
-  positions and routes each edge as a bezier between typed ports (`top`/`bottom`/`left`/`right`),
-  leaving and entering perpendicular to the card edge. Hub fan-outs use `to_port: left`.
+PipelineForge is the diagram-generator member of the Forge family — same visual standard as BacForge, VirusForge and RNAForge, but a tool rather than a pipeline. Every project's `docs/pipeline_architecture.html` comes out of the same mould; only the graph content and the category palette change.
+
+## What it does
+
+It renders a hand-drawn inline-SVG node-graph on a dotted canvas from a YAML spec: typed cards (code chip + name + tool + ports), curved bezier edges, a decision diamond, a module matrix table, the isolated-environment list, and a TR/EN toggle.
+
+- **Skeleton is fixed** (the RNAForge reference): CSS/theme, sections, node vocabulary and layout mechanics live in `pipelineforge/forge.py` — one source of truth for the look.
+- **Content comes from a spec** (`specs/<project>.yml`): nodes, edges, categories, tools, environments, decision node.
+- **Edges are the real `run()` dependencies** extracted from the project's code, so the diagram matches how the pipeline actually runs — not a hand-wavy sketch.
+- **Colours are roles, categories are per-project**: blue = shared, green/amber = branches, purple = diagnostic. Each render self-validates (node/edge counts, tag balance, no `U+FFFD`).
+
+## Installation
+
+```bash
+git clone https://github.com/aliarslan47/PipelineForge.git
+cd PipelineForge
+
+pip install -e .            # or: pip install pyyaml
+```
 
 ## Usage
 
 ```bash
-pip install -e .            # or: pip install pyyaml
-pipelineforge render specs/rnaforge.yml -o ../rnaforge-pipeline/docs/pipeline_architecture.html
+pipelineforge render specs/rnaforge.yml   -o ../rnaforge-pipeline/docs/pipeline_architecture.html
 pipelineforge render specs/virusforge.yml -o ../VirusForge/docs/pipeline_architecture.html
-pipelineforge render specs/bacforge.yml  -o ../BacForge/docs/pipeline_architecture.html
+pipelineforge render specs/bacforge.yml   -o ../BacForge/docs/pipeline_architecture.html
 ```
 
-Each render also self-validates: it prints the per-page node/edge counts and checks tag balance and
-that no replacement character (`U+FFFD`) slipped in. Publish the output on GitHub Pages
-(`Settings → Pages → main /docs`) so the badge in the project README links to a live rendered page.
+Publish the output on GitHub Pages (`Settings → Pages → main /docs`) so the diagram badge in the project README links to a live page.
 
-## Example specs
+## Modules
+
+The specs it renders (one per Forge project); add a new project by extracting its real `run()` dependencies into `specs/<project>.yml`, rendering, and pointing the README badge at the published page.
 
 | Spec | Project | Archetype | Nodes / edges |
 |---|---|---|---|
-| `specs/rnaforge.yml`   | RNAForge   | hub-and-spoke (m06) | 21 / 23 |
+| `specs/rnaforge.yml` | RNAForge | hub-and-spoke (m06) | 21 / 23 |
 | `specs/virusforge.yml` | VirusForge | molecule branch (DNA/RNA) | 13 / 16 |
-| `specs/bacforge.yml`   | BacForge   | hub-and-spoke (M04) | 19 / 20 |
+| `specs/bacforge.yml` | BacForge | hub-and-spoke (M04) | 19 / 20 |
 
-## Adding a new project
+Full spec format and the "adding a new project" walkthrough live in the source and `specs/`.
 
-1. Extract the real `run()` dependencies from the project's module code (which module requires which).
-2. Write `specs/<project>.yml`: `meta`, `lanes`, `categories`, `nodes` (code, tr/en name, tool,
-   `cat`, `lane`, `y`, `dep`), `edges`, `envs`, optional `decision` and `hub_label`.
-3. `pipelineforge render specs/<project>.yml -o <project>/docs/pipeline_architecture.html`.
-4. Commit, enable Pages, point the project README's diagram badge at the rendered URL.
+---
+
+Forge family: **PipelineForge** (DAG generator) · [RNAForge](https://github.com/aliarslan47/RNAForge) (bulk RNA-seq) · [BacForge](https://github.com/aliarslan47/BacForge) (bacteria) · [VirusForge](https://github.com/aliarslan47/VirusForge) (virus/phage).
