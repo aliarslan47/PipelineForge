@@ -1,0 +1,80 @@
+name: RNAForge · Metatranscriptome
+title: RNAForge Metatranscriptome Pipeline DAG
+filename: "rnaforge · metatranscriptome.dag"
+repo: github.com/aliarslan47/RNAForge
+favicon: "🦠"
+viewbox: [960, 940]
+
+subtitle_tr: >-
+  Metatranskriptom kolu — gerçek run() bağımlılık grafiği. Doğrusal omurga m01→m03→rRNA-temizleme→m04→m05→m06;
+  okuma QC (m02) doğrulamadan ayrı bir daldır. İki topluluk aşaması (rRNA-temizleme + taksonomi) trimlemeden
+  sonra eklenir: rRNA-temizleme SortMeRNA ile ribozomal okumayı ayıklar, taksonomi (Kraken2+Bracken) rRNA'sız
+  okumalarda topluluk kompozisyonunu çıkarır. Niceleme rRNA'sız okumaları GEN KATALOĞUNA (bowtie2) hizalar,
+  sayım featureCounts ile CDS/locus_tag üzerinden yapılır; m06 (DESeq2) agnostik hub'dır. Kapılar permissive.
+subtitle_en: >-
+  The metatranscriptome branch — real run() dependency graph. Linear spine m01→m03→rRNA-depletion→m04→m05→m06;
+  read QC (m02) is a branch off validation. Two community stages (rRNA-depletion + taxonomy) are inserted after
+  trimming: rRNA-depletion (SortMeRNA) removes ribosomal reads, taxonomy (Kraken2+Bracken) profiles the community
+  on the depleted reads. Quantification aligns depleted reads to the GENE CATALOG (bowtie2), counting is
+  featureCounts over CDS/locus_tag; m06 (DESeq2) is the agnostic hub. Gates are permissive throughout.
+footer_tr: >-
+  RNAForge · metatranskriptom kolu · github.com/aliarslan47/RNAForge. Kenarlar gerçek run() bağımlılıklarından
+  çıkarıldı: rRNA-temizleme ← m03, taksonomi ← rRNA-temizleme, m04 (gen kataloğu) ← rRNA-temizleme. Referans =
+  birleşik topluluk gen kataloğu (gene_catalog.fna/.gff). m19 temizlik koşunun en son adımı.
+footer_en: >-
+  RNAForge · metatranscriptome branch · github.com/aliarslan47/RNAForge. Edges are the real run() dependencies:
+  rRNA-depletion ← m03, taxonomy ← rRNA-depletion, m04 (gene catalog) ← rRNA-depletion. Reference = a combined
+  community gene catalog (gene_catalog.fna/.gff). m19 cleanup is the final stage of the run.
+aria_tr: "RNAForge metatranskriptom DAG. Omurga m01 m03 rRNA-temizleme m04 m05 m06. Taksonomi ve tanı sağ dallar."
+aria_en: "RNAForge metatranscriptome DAG. Spine m01 m03 rRNA-depletion m04 m05 m06. Taxonomy and diagnostics on the right."
+
+lanes:
+  left: 210
+  center: 480
+  right: 750
+
+categories:
+  sh:   {color: blue,   tr: ortak,          en: shared}
+  meta: {color: green,  tr: metatranskriptom, en: metatranscriptome}
+  diag: {color: purple, tr: tanı,           en: diagnostic, dashed: true}
+
+hub_label: {at: [600, 520], tr: "DESeq2 hub", en: "DESeq2 hub"}
+
+nodes:
+  - {code: m01, tr: Doğrulama, en: Validate, tool: "girdi + platform", cat: sh, lane: center, y: 30, dep: "—"}
+  - {code: m02, tr: Okuma QC, en: Read QC, tool: "FastQC", cat: sh, lane: left, y: 30, dep: m01}
+  - {code: m03, tr: Trimming, en: Trimming, tool: "fastp", cat: sh, lane: center, y: 124, dep: m01}
+  - {code: rRNA, tr: rRNA Temizleme, en: rRNA Depletion, tool: "SortMeRNA", cat: meta, lane: center, y: 218, dep: m03}
+  - {code: TAX, tr: Taksonomi, en: Taxonomy, tool: "Kraken2 + Bracken", cat: diag, lane: right, y: 218, dep: rRNA}
+  - {code: m04, tr: Niceleme, en: Quantify, tool: "bowtie2 → gen kataloğu", cat: meta, lane: center, y: 312, dep: rRNA}
+  - {code: m05, tr: Sayım, en: Counts, tool: "featureCounts · CDS/locus_tag", cat: meta, lane: center, y: 406, dep: m04}
+  - {code: m16, tr: Sekans QC, en: Sequence QC, tool: "SortMeRNA · RSeQC", cat: diag, lane: right, y: 312, dep: m04}
+  - {code: m17, tr: Hizalama QC, en: Alignment QC, tool: "samtools stats", cat: diag, lane: right, y: 406, dep: m04}
+  - {code: m06, tr: "Diferansiyel İfade", en: "Differential Expr.", tool: "DESeq2 · ~subject+condition", cat: sh, lane: center, y: 500, dep: m05, tag: HUB}
+  - {code: m18, tr: MultiQC, en: MultiQC, tool: "tüm koşu", cat: diag, lane: right, y: 500, dep: m04}
+  - {code: m07, tr: Figürler, en: Figures, tool: "PCA·Volcano·Heatmap·MA", cat: sh, lane: center, y: 594, dep: m06}
+  - {code: m08, tr: Rapor, en: Report, tool: "toplar: m07 + tanı", cat: sh, lane: center, y: 688, dep: m07}
+  - {code: m19, tr: Temizlik, en: Cleanup, tool: "trimmed + BAM sil", cat: sh, lane: center, y: 782, dep: m08}
+
+edges:
+  - {src: m01, dst: m02, cat: sh, from_port: left, to_port: right}
+  - {src: m01, dst: m03, cat: sh}
+  - {src: m03, dst: rRNA, cat: sh}
+  - {src: rRNA, dst: TAX, cat: diag, from_port: right, to_port: left}
+  - {src: rRNA, dst: m04, cat: meta}
+  - {src: m04, dst: m05, cat: meta}
+  - {src: m04, dst: m16, cat: diag, from_port: right, to_port: left}
+  - {src: m04, dst: m17, cat: diag, from_port: right, to_port: left}
+  - {src: m04, dst: m18, cat: diag, from_port: right, to_port: left}
+  - {src: m05, dst: m06, cat: meta}
+  - {src: m06, dst: m07, cat: sh}
+  - {src: m07, dst: m08, cat: sh}
+  - {src: m08, dst: m19, cat: sh}
+
+envs:
+  - rnaforge-core
+  - rnaforge-qc
+  - rnaforge-seqqc
+  - rnaforge-meta
+  - rnaforge-quant-prok
+  - rnaforge-de

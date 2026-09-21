@@ -25,6 +25,7 @@ COLORS = {
     "green":  dict(light="#2f8f5b", dark="#5cc08a", bg_light="#e4f1ea", bg_dark="#15321f"),
     "amber":  dict(light="#c07211", dark="#e0a24e", bg_light="#f7ecdb", bg_dark="#3a2c16"),
     "purple": dict(light="#7d6fae", dark="#a99bd0", bg_light="#eeeaf6", bg_dark="#221d33"),
+    "rose":   dict(light="#b3477e", dark="#e07aa8", bg_light="#f7e4ee", bg_dark="#331722"),
 }
 DEC_LIGHT, DEC_DARK = "#8a5cd0", "#b28cf0"
 
@@ -193,7 +194,7 @@ def _css(spec: Spec) -> str:
   *{{box-sizing:border-box}}
   body{{margin:0;background:var(--bg);color:var(--ink);
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55;padding:30px 22px 38px}}
-  .wrap{{max-width:1180px;margin:0 auto}}
+  .wrap{{max-width:{max(1180, spec.viewbox[0] + 40)}px;margin:0 auto}}
   .toggle{{display:flex;justify-content:flex-end;margin-bottom:14px}}
   .toggle .grp{{display:inline-flex;border:1px solid var(--bd);border-radius:999px;overflow:hidden;background:var(--card)}}
   .langbtn{{border:0;background:transparent;color:var(--mut);font:600 12.5px system-ui;
