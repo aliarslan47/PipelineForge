@@ -1,0 +1,83 @@
+name: MicrobiomeForge
+title: MicrobiomeForge Pipeline DAG
+filename: "microbiomeforge · pipeline.dag"
+repo: github.com/aliarslan47/MicrobiomeForge
+favicon: "🦠"
+viewbox: [1040, 800]
+
+subtitle_tr: >-
+  Gerçek run() bağımlılık grafiği. MicrobiomeForge kendi hizalayıcı/sınıflandırıcı YAZMAZ; nf-core
+  motorlarını (taxprofiler · mag · funcscan) sürer ve üstüne "yorumlanmış rapor" katmanı ekler. Omurga
+  girdi→QC→samplesheet/plan; plandan üç nf-core motoru dallanır (funcscan MAG'lara bağlı), çıktıları
+  ayrıştırılıp istatistik (çeşitlilik·PERMANOVA·diferansiyel bolluk) ile yorumlanır, 01–07 numaralı
+  çıktılara akar. Platform (kısa/uzun okuma) araç düzeyinde dik eksendir.
+subtitle_en: >-
+  The real run() dependency graph. MicrobiomeForge writes NO aligner/classifier of its own; it drives the
+  nf-core engines (taxprofiler · mag · funcscan) and adds an "interpreted report" layer on top. Spine
+  input→QC→samplesheet/plan; three nf-core engines branch off the plan (funcscan depends on the MAGs),
+  their outputs are parsed and interpreted with statistics (diversity · PERMANOVA · differential abundance),
+  flowing into numbered outputs 01–07. Read type (short/long) is an orthogonal, tool-level axis.
+footer_tr: >-
+  MicrobiomeForge · nf-core motoru üstünde yorumlanmış-rapor katmanı · github.com/aliarslan47/MicrobiomeForge.
+  Kenarlar gerçek çıktı-bağımlılıklarından çıkarıldı: funcscan ← mag (MAG'lar), 03 çeşitlilik ← 02 profil.
+  Kısa: taxprofiler Kraken2/Bracken, mag metaSPAdes; uzun: taxprofiler sylph, mag metaFlye/metaMDBG.
+footer_en: >-
+  MicrobiomeForge · interpreted-report layer on the nf-core engine · github.com/aliarslan47/MicrobiomeForge.
+  Edges are the real output dependencies: funcscan ← mag (MAGs), 03 diversity ← 02 profile.
+  Short: taxprofiler Kraken2/Bracken, mag metaSPAdes; long: taxprofiler sylph, mag metaFlye/metaMDBG.
+aria_tr: "MicrobiomeForge pipeline DAG. Omurga girdi QC plan. Üç nf-core motoru taxprofiler mag funcscan. Yorum katmanı çıktı 01-07."
+aria_en: "MicrobiomeForge pipeline DAG. Spine input QC plan. Three nf-core engines taxprofiler mag funcscan. Interpret layer outputs 01-07."
+
+lanes:
+  left: 200
+  center: 520
+  right: 840
+
+categories:
+  sh:     {color: blue,   tr: ortak,          en: shared}
+  engine: {color: green,  tr: "nf-core motoru", en: "nf-core engine"}
+  interp: {color: amber,  tr: yorum,           en: interpret}
+  out:    {color: purple, tr: çıktı,           en: output}
+
+hub_label: {at: [660, 250], tr: "plan → 3 motor", en: "plan → 3 engines"}
+
+nodes:
+  - {code: M0, tr: Girdi + Platform, en: Input + Platform, tool: "detect (kısa/uzun)", cat: sh, lane: center, y: 24, dep: "—"}
+  - {code: M1, tr: QC İstatistik, en: QC Stats, tool: "fastp/NanoPlot → 01", cat: sh, lane: center, y: 110, dep: M0}
+  - {code: PLAN, tr: Samplesheet + Plan, en: Samplesheet + Plan, tool: "nf-core planlama", cat: sh, lane: center, y: 196, dep: M1}
+  # --- nf-core motorları ---
+  - {code: TAX, tr: taxprofiler, en: taxprofiler, tool: "Kraken2·Bracken·sylph", cat: engine, lane: left, y: 320, dep: PLAN}
+  - {code: MAG, tr: mag, en: mag, tool: "metaSPAdes/Flye·SemiBin2·CheckM2", cat: engine, lane: center, y: 320, dep: PLAN}
+  - {code: FUNC, tr: funcscan, en: funcscan, tool: "AMR + BGC (MAG'larda)", cat: engine, lane: right, y: 320, dep: MAG}
+  # --- yorum katmanı (parse + numaralı çıktı) ---
+  - {code: P02, tr: "02 Taksonomik Profil", en: "02 Taxonomic Profile", tool: "parse taxprofiler", cat: interp, lane: left, y: 430, dep: TAX}
+  - {code: P04, tr: "04 MAG Kalite", en: "04 MAG Quality", tool: "parse mag (CheckM2)", cat: interp, lane: center, y: 430, dep: MAG}
+  - {code: P05, tr: "05 AMR / BGC", en: "05 AMR / BGC", tool: "parse funcscan", cat: interp, lane: right, y: 430, dep: FUNC}
+  - {code: STAT, tr: "03 Çeşitlilik + İstatistik", en: "03 Diversity + Stats", tool: "α/β · PERMANOVA · dif. bolluk", cat: interp, lane: left, y: 528, dep: P02}
+  # --- çıktı ---
+  - {code: FIG, tr: "06 Şekiller", en: "06 Figures", tool: "yayın-kalite PDF", cat: out, lane: center, y: 626, dep: "P02–P05 + 03"}
+  - {code: REP, tr: "07 Rapor", en: "07 Report", tool: "Jinja2 → MD → PDF", cat: out, lane: center, y: 712, dep: FIG}
+
+edges:
+  - {src: M0, dst: M1, cat: sh}
+  - {src: M1, dst: PLAN, cat: sh}
+  - {src: PLAN, dst: TAX, cat: engine, from_port: bottom, to_port: top}
+  - {src: PLAN, dst: MAG, cat: engine, from_port: bottom, to_port: top}
+  - {src: PLAN, dst: FUNC, cat: engine, from_port: bottom, to_port: top}
+  - {src: MAG, dst: FUNC, cat: engine, from_port: right, to_port: left}
+  - {src: TAX, dst: P02, cat: interp}
+  - {src: MAG, dst: P04, cat: interp}
+  - {src: FUNC, dst: P05, cat: interp}
+  - {src: P02, dst: STAT, cat: interp}
+  - {src: P02, dst: FIG, cat: out, to_port: top}
+  - {src: STAT, dst: FIG, cat: out, to_port: left}
+  - {src: P04, dst: FIG, cat: out, to_port: top}
+  - {src: P05, dst: FIG, cat: out, to_port: right}
+  - {src: FIG, dst: REP, cat: out}
+
+envs:
+  - nextflow
+  - nf-core/taxprofiler
+  - nf-core/mag
+  - nf-core/funcscan
+  - microbiomeforge
